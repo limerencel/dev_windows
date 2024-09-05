@@ -1,3 +1,5 @@
+#define UNICODE
+#define _UNICODE
 #include <windows.h>
 
 //Window Procedure
@@ -11,7 +13,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
       PAINTSTRUCT ps;
       HDC hdc = BeginPaint(hwnd, &ps); //get device conetxt for painting
       //File the window wiht a solid color
-      FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+      HBRUSH hBrush = CreateSolidBrush(RGB(0,0,0));
+      // FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+      FillRect(hdc, &ps.rcPaint, hBrush);
+      DeleteObject(hBrush);
+
+      SetTextColor(hdc, RGB(255, 255, 255));
+      SetBkMode(hdc, TRANSPARENT);
+      TextOutW(hdc, 20, 40, L"Hello, Windows!", wcslen(L"Hello, Windows!"));
 
       EndPaint(hwnd, &ps);
       return 0;
@@ -28,20 +37,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int cmdShow) {
   WNDCLASS wc = {};
   wc.lpfnWndProc = WndProc;
   wc.hInstance = hInstance;
-  wc.lpszClassName = "MyWindowClass";
+  wc.lpszClassName = L"MyWindowClass";
+  // wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 
   RegisterClass(&wc);
 
-  //create the window
+  // create the window
   HWND hwnd = CreateWindowEx(
     0,
     wc.lpszClassName,
-    "Hello, World!",
+    L"胡继尧 2420631127",
     WS_OVERLAPPEDWINDOW,
-    CW_USEDEFAULT,
-    CW_USEDEFAULT,
-    800,
-    600,
+    100,
+    200,
+    400,
+    300,
     NULL,
     NULL,
     wc.hInstance,
@@ -51,10 +61,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int cmdShow) {
     return 0; //hndle error
   }
 
+
   ShowWindow(hwnd, cmdShow);
 
   // Message loop
-  MSG msg;
+  MSG msg = {};
   while (GetMessage(&msg, NULL, 0, 0)) {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
