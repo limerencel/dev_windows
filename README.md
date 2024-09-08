@@ -56,4 +56,6 @@ In the Windows operating system, messages are sent and received as part of the *
 3. **Message Loop**: The application retrieves messages from the queue using functions like GetMessage.
 4. **Message Handling**: The retrieved messages are passed to the window procedure for processing, where the developer defines how the application should respond to each type of message.
 
+### Purpose of Message Loop
+
 in a typical windows application, the `WinMain` function requires at least the `HINSTANCE` and `int` parameters, as per the standerd signatures.
