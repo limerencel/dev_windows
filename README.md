@@ -68,6 +68,8 @@ In the Windows operating system, messages are sent and received as part of the *
 
 in a typical windows application, the `WinMain` function requires at least the `HINSTANCE` and `int` parameters, as per the standerd signatures.
 
+Brushes
+
 ```bash
 g++ your_file.cpp -o your_program -mwindows -lgdi32
 ```
