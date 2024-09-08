@@ -46,7 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int cmdShow) {
   HWND hwnd = CreateWindowEx(
     0,
     wc.lpszClassName,
-    L"胡继尧 2420631127",
+    L"DAMN",
     WS_OVERLAPPEDWINDOW,
     100,
     200,
