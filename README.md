@@ -58,4 +58,12 @@ In the Windows operating system, messages are sent and received as part of the *
 
 ### Purpose of Message Loop
 
+1. Message Retrieval:
+   1. GetMessage(&msg, NULL, 0, 0) retrieves messages from the application's message queue. It waits for messages to arrive if the queue is empty.
+   2. The function returns TRUE as long as there are messages to process. When it encounters a WM_QUIT message (indicating that the application should exit), it returns FALSE, breaking the loop.
+2. Message Translation:
+   1. TranslateMessage(&msg) translates virtual-key messages (like keyboard input) into character messages (like typing letters). This step is necessary for handling keyboard input correctly, as it converts key events into characters.
+3. Message Dispatching:
+   1. DispatchMessage(&msg) sends the message to the appropriate window procedure (the WindowProc function you defined). This is where the actual handling of the message takes place, allowing your application to respond to events like painting, resizing, or closing.
+
 in a typical windows application, the `WinMain` function requires at least the `HINSTANCE` and `int` parameters, as per the standerd signatures.
