@@ -67,3 +67,7 @@ In the Windows operating system, messages are sent and received as part of the *
    1. DispatchMessage(&msg) sends the message to the appropriate window procedure (the WindowProc function you defined). This is where the actual handling of the message takes place, allowing your application to respond to events like painting, resizing, or closing.
 
 in a typical windows application, the `WinMain` function requires at least the `HINSTANCE` and `int` parameters, as per the standerd signatures.
+
+```bash
+g++ your_file.cpp -o your_program -mwindows -lgdi32
+```
