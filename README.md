@@ -68,6 +68,36 @@ In the Windows operating system, messages are sent and received as part of the *
 
 in a typical windows application, the `WinMain` function requires at least the `HINSTANCE` and `int` parameters, as per the standerd signatures.
 
+---
+Functions
+
+### WndProc
+
+`WndProc` function receives the messages from the operating system and the application itself. Each message corresponds to a specific event or action, such as mosue clicks, keyboard input, window resizing, etc.
+You need to define how to handle the these messages by implementing the conditional statements within `WndProc`.
+If you do not handle a specific message, you can call `DefWindowProc`, which provides default processing for unhandled messages.
+
+### Explain _GetMessage_ function
+
+1. The `GetMessage` function will return a non-zero value if a message is successfully retrieved from the queue.
+2. if a message retrieved is `WM_QUIT`, `GetMessage` will return zero, Thid indicates that the application should terminate, and the message loop should exit.
+3. Rare case: If there is an error or if the function fails, `GetMessage` will return a negative value.
+
+```c++
+BOOL GetMessage(
+  LPMSG lpMsg,
+  HWND   hWnd,
+  UINT   wMsgFilterMin,
+  UINT   wMsgFilterMax
+);
+```
+
+- `LPMSG`: A pointer to an `MSG` structure that will receive message information.
+- `HWND`: A handle to the window whose message you want to retrieve. If this parameter is `NULL`, it retrieves message for any window associated with the <u>current thread</u>.
+- `wMsgFilterMin` and `wMsgFilterMax`: These parameters allow filtering of the message that are retrieved.
+
+
+
 Brushes
 
 ```bash

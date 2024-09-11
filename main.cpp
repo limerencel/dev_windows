@@ -1,11 +1,19 @@
 #define UNICODE
 #define _UNICODE
 #include <windows.h>
+#include <string>
+#include <cstdio>
 
 //Window Procedure
+int counter = 0;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
   switch (message) {
-    case WM_DESTROY:
+    case WM_CLOSE:
+      {
+      wchar_t  message[100];
+      wsprintf(message, L"GetMessage: %d times.", counter);
+      MessageBox(hwnd, message, L"Message", MB_OK);
+      }
       PostQuitMessage(0);
       return 0;
   
@@ -38,7 +46,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int cmdShow) {
   wc.lpfnWndProc = WndProc;
   wc.hInstance = hInstance;
   wc.lpszClassName = L"MyWindowClass";
-  // wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+  wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+  wc.hCursor = LoadCursor(NULL, IDC_HAND);
 
   RegisterClass(&wc);
 
@@ -46,7 +55,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int cmdShow) {
   HWND hwnd = CreateWindowEx(
     0,
     wc.lpszClassName,
-    L"DAMN",
+    L"Numbers...",
     WS_OVERLAPPEDWINDOW,
     100,
     200,
@@ -64,11 +73,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int cmdShow) {
 
   ShowWindow(hwnd, cmdShow);
 
-  // Message loop
+  // Message loop for GetMessage
+  // MSG msg = {};
+  // int result;
+  // while ((result = GetMessage(&msg, NULL, 0, 0)) != 0) {
+  //   if (result == -1) {
+  //     break; // handle the error
+  //   }
+  //   counter++;
+  //   TranslateMessage(&msg);
+  //   DispatchMessage(&msg);
+  // }
+  
+  // for PeekMessage
   MSG msg = {};
-  while (GetMessage(&msg, NULL, 0, 0)) {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
+  while (true) {
+    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)!= 0) {
+      if (msg.message == WM_QUIT) {
+        break;
+      }
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    } else {
+      counter++;
+      Sleep(1000); // prevent heavy CPU usage
+    }
   }
 
   return 0;
