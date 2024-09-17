@@ -1,4 +1,4 @@
 .vscode
 output
 test.cpp
-MyApp.exe
+*.exe

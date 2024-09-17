@@ -11,8 +11,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
     case WM_CLOSE:
       {
       wchar_t  message[100];
-      wsprintf(message, L"GetMessage: %d times.", counter);
-      MessageBox(hwnd, message, L"Message", MB_OK);
+      wsprintf(message, L"Message: %d times.", counter);
+      // MessageBox(hwnd, message, L"Message", MB_OK);
       }
       PostQuitMessage(0);
       return 0;
@@ -26,13 +26,40 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
       FillRect(hdc, &ps.rcPaint, hBrush);
       DeleteObject(hBrush);
 
-      SetTextColor(hdc, RGB(255, 255, 255));
-      SetBkMode(hdc, TRANSPARENT);
-      TextOutW(hdc, 20, 40, L"Hello, Windows!", wcslen(L"Hello, Windows!"));
+      // SetTextColor(hdc, RGB(255, 255, 255));
+      // SetBkMode(hdc, TRANSPARENT);
+      // TextOutW(hdc, 20, 40, L"Hello, Windows!", wcslen(L"Hello, Windows!"));
+
+      // Draw a rectangle
+      HBRUSH hRectBrush = CreateSolidBrush(RGB(203, 128, 171));
+      SelectObject(hdc, hRectBrush);
+      Rectangle(hdc, 50, 50, 150, 150);
+      DeleteObject(hRectBrush);
+
+      // Draw a ellipse
+      HBRUSH hEllipseBrush = CreateSolidBrush(RGB(203, 128, 171));
+      SelectObject(hdc, hEllipseBrush);
+      Ellipse(hdc, 200, 70, 300, 130);
+      DeleteObject(hEllipseBrush);
+
 
       EndPaint(hwnd, &ps);
       return 0;
     }
+    case WM_KEYDOWN: {
+      switch (wParam) {
+        case VK_RETURN:
+          // handle the enter key
+          HDC hdc = GetDC(hwnd);
+
+          // Draw a rectangle
+          Rectangle(hdc, 20, 30, 120, 80);
+
+          ReleaseDC(hwnd, hdc);
+          return 0;
+      }
+    }
+
     default:
       return DefWindowProc(hwnd, message, wParam, lParam);
   }
@@ -94,10 +121,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int cmdShow) {
       }
       TranslateMessage(&msg);
       DispatchMessage(&msg);
-    } else {
-      counter++;
-      Sleep(1000); // prevent heavy CPU usage
     }
+    // else {
+    //   counter++;
+    //   Sleep(1000); // prevent heavy CPU usage
+    // }
   }
 
   return 0;
