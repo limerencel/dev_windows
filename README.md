@@ -103,3 +103,10 @@ Brushes
 ```bash
 g++ your_file.cpp -o your_program -mwindows -lgdi32
 ```
+
+## Display Text
+the outlines of best practice
+1. Create a function to draw the text, including necessary parameters like text to display, the font, and the device context(HDC), which contains the actual text drawing code like `TextOut`or `DrawText`.
+2. Call the function from `WM_PAINT`.
+3. Update the text only when necessary.
+4. Use a back buffer(optional). 
