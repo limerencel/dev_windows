@@ -7,7 +7,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     case WM_CREATE: {
       hBitmap = (HBITMAP)LoadImage(
         NULL,
-        TEXT("./bitmap/walker.bmp"),
+        TEXT("./bitmap/monster.bmp"),
         IMAGE_BITMAP,
         0,
         0,
@@ -27,6 +27,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         GetObject(hBitmap, sizeof(BITMAP), &bitmap);
         // draw bitmap to the window
         BitBlt(hdc, 0, 0, bitmap.bmWidth, bitmap.bmHeight, hdcMem, 0, 0, SRCCOPY);
+        BitBlt(hdc, 200, 0, bitmap.bmWidth, bitmap.bmHeight, hdcMem, 0, 0, SRCCOPY);
+        COLORREF transparentColor = RGB(0, 229, 0);
+        TransparentBlt(hdc, 0, 300, bitmap.bmWidth, bitmap.bmHeight, hdcMem, 0, 0, bitmap.bmWidth, bitmap.bmHeight, transparentColor);
+        StretchBlt(hdc, 300, 200, bitmap.bmWidth*2, bitmap.bmHeight*2, hdcMem, 0, 0, bitmap.bmWidth, bitmap.bmHeight, SRCCOPY);
         SelectObject(hdcMem, hOldBitMap);
         DeleteDC(hdcMem);
       }
