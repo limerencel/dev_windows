@@ -83,3 +83,17 @@ Second BitBlt:
 Source: memDC (the offscreen buffer containing the combined graphics)
 Destination: hdc (the actual screen)
 This call copies the contents of the offscreen buffer (memDC) to the screen (hdc). This is the final step where the drawn image is displayed to the user.
+
+## _Why do we need offscreenBitmap_
+
+```c++
+    HDC bitmapDC = CreateCompatibleDC(hdc);
+    HBITMAP oldBitmapDC = (HBITMAP)SelectObject(bitmapDC, hBitMap);
+    BitBlt(memDC, x, y, bitmap.bmWidth, bitmap.bmHeight, bitmapDC, 0, 0, SRCCOPY);
+```
+
+Simply Creating a new device context with `CreateCompatibleDC(hdc)` does indeed create a new DC (like a "canvas"), but it doesn't automatically allocate memory for storing pixel data. A device context (DC) by itself is essentially a structure that defines drawing properties (brushes, pens, etc.) but doesn't hold the pixel data directly.
+When you create a DC with CreateCompatibleDC(hdc), it starts with a default 1x1 monochrome bitmap. This default bitmap is not suitable for holding complex image data like your original bitmap, which is why you need to replace it with a compatible bitmap of the desired size and color depth. Like this:
+`HBITMAP offscreenBitmap = CreateCompatibleBitmap(hdc, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top);
+`
+When you select offscreenBitmap into memDC, you are associating that memory buffer with memDC, enabling it to store any drawing operations (like the BitBlt from bitmapDC). Without this step, memDC wouldn't have a place to hold the drawn content.
