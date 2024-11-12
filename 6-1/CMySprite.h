@@ -2,7 +2,8 @@
 #include <algorithm>
 #include <wingdi.h>
 #include <cmath>
-#include <iostream>
+#include <strsafe.h>
+
 
 class CMySprite {
 private:
@@ -20,59 +21,10 @@ private:
     bool useTransparency;
     float rotateAngle;
     bool isSelected;
-
-    void RenderRotated(HDC hdcDest, int scaledWidth, int scaledHeight) {
-        char debug[100];
-        sprintf(debug, "RenderRotated called. Angle: %f\n", rotateAngle);
-        OutputDebugString(debug);
-
-        // Create a temporary DC and bitmap for rotation
-        HDC hdcTemp = CreateCompatibleDC(hdcDest);
-        HBITMAP hbmTemp = CreateCompatibleBitmap(hdcDest, scaledWidth, scaledHeight);
-        HBITMAP hbmOld = (HBITMAP)SelectObject(hdcTemp, hbmTemp);
-
-        // Set the background of temporary DC to be transparent
-        SetBkMode(hdcTemp, TRANSPARENT);
-
-        // Create a transformation matrix for rotation
-        XFORM xform;
-        float radians = rotateAngle * 3.14159f / 180.0f;  // Convert degrees to radians
-        float cosTheta = cos(radians);
-        float sinTheta = sin(radians);
-        xform.eM11 = cosTheta;
-        xform.eM12 = sinTheta;
-        xform.eM21 = -sinTheta;
-        xform.eM22 = cosTheta;
-        xform.eDx = scaledWidth / 2.0f;
-        xform.eDy = scaledHeight / 2.0f;
-
-        // Set the graphics mode to advanced and apply the transformation
-        int oldGraphicsMode = SetGraphicsMode(hdcTemp, GM_ADVANCED);
-        SetWorldTransform(hdcTemp, &xform);
-
-        // Draw the rotated sprite onto the temporary DC
-        if (useTransparency) {
-            TransparentBlt(hdcTemp, -scaledWidth/2, -scaledHeight/2, scaledWidth, scaledHeight, 
-                hdcMem, 0, 0, width, height, m_colorKey);
-        } else {
-            StretchBlt(hdcTemp, -scaledWidth/2, -scaledHeight/2, scaledWidth, scaledHeight, 
-            hdcMem, 0, 0, width, height, SRCCOPY);
-        }
-
-        // Reset the graphics mode
-        SetGraphicsMode(hdcTemp, oldGraphicsMode);
-
-        // Copy the rotated sprite to the destination DC
-        BitBlt(hdcDest, x, y, scaledWidth, scaledHeight, hdcTemp, 0, 0, SRCCOPY);
-
-        // Clean up
-        SelectObject(hdcTemp, hbmOld);
-        DeleteObject(hbmTemp);
-        DeleteDC(hdcTemp);
-    }
-
+    bool visible = true;
+    
 public:
-    CMySprite(HDC hdc, int x, int y) 
+    CMySprite(HDC hdc, int x, int y)
         : x(x), y(y), scaleFactor(1.0f), hBitmap(NULL), hdcMem(NULL), lastScaleTime(0), lastMoveTime(0)
         , useTransparency(true), rotateAngle(0.0f), isSelected(false) {
         // ":" intoduces member initializer list, which initializes the member variables
@@ -83,9 +35,9 @@ public:
     }
 
 
-    void LoadBitmap(const char* filename) {
+    void LoadBitmap(HINSTANCE hInstance, UINT resourceID) {
         if (hBitmap) DeleteObject(hBitmap);
-        hBitmap = (HBITMAP)LoadImage(NULL, filename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+        hBitmap = (HBITMAP)LoadImage(hInstance, MAKEINTRESOURCE(resourceID), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
         if (hBitmap == NULL) {
             MessageBox(NULL, "Error loading bitmap", "Error", MB_OK | MB_ICONERROR);
             return;
@@ -106,7 +58,7 @@ public:
         DWORD currentTime = GetTickCount();
         if (currentTime - lastScaleTime < SCALE_COOLDOWN) return;
         scaleFactor *= 1.1f; // Increase by 10%
-        scaleFactor = std::min(scaleFactor, 2.0f); // Cap at 200% of original size
+        scaleFactor = min(scaleFactor, 3.0f); // Cap at 200% of original size
         lastScaleTime = currentTime;
     }
 
@@ -114,7 +66,7 @@ public:
         DWORD currentTime = GetTickCount();
         if (currentTime - lastScaleTime < SCALE_COOLDOWN) return;
         scaleFactor *= 0.9f; // Decrease by 10%
-        scaleFactor = std::max(scaleFactor, 0.5f); // Don't go below 50% of original size
+        scaleFactor = max(scaleFactor, 0.5f); // Don't go below 50% of original size
         lastScaleTime = currentTime;
     }
 
@@ -130,42 +82,83 @@ public:
         rotateAngle += degrees;
         rotateAngle = std::fmod(rotateAngle, 360.0f);
         char debug[100];
-        sprintf(debug, "Rotate called. New angle: %f\n", rotateAngle);
-        OutputDebugString(debug);
+        StringCbPrintfA(debug, sizeof(debug), "Rotate called. New angle: %f\n", rotateAngle);
+        OutputDebugStringA(debug);
     }
 
-    void constrainToScreen(int screenWidth, int screenHeight) {
-    int spriteWidth = getScaledWidth();
-    int spriteHeight = getScaledHeight();
+    bool isColliding(const CMySprite* other) {
+        RECT thisRect = { x, y, x + getScaledWidth(), y + getScaledHeight() };
+        RECT otherRect = { other->x, other->y, other->x + other->getScaledWidth(), other->y + getScaledHeight() };
+        RECT intersection;
+        return IntersectRect(&intersection, &thisRect, &otherRect);
+    }
+    bool isVisible() const { return visible; }
+    void setVisible(bool isVisible) { visible = isVisible; };
 
-    x = std::max(0, std::min(x, screenWidth - spriteWidth));
-    y = std::max(0, std::min(y, screenHeight - spriteHeight));
+    int getArea() const { return getScaledWidth() * getScaledHeight(); }
+
+
+    void constrainToScreen(int screenWidth, int screenHeight) {
+        int spriteWidth = getScaledWidth();
+        int spriteHeight = getScaledHeight();
+
+        x = max(0, min(x, screenWidth - spriteWidth));
+        y = max(0, min(y, screenHeight - spriteHeight));
     }
 
     bool containsPoint(int px, int py) const {
         return px >= x && px < x + getScaledWidth() && py >= y && py < y + getScaledHeight();
     }
 
-    void setSelected(bool selected) {isSelected = selected;}
-    bool getSelected() const {return isSelected;}
+    void setSelected(bool selected) { isSelected = selected; }
+    bool getSelected() const { return isSelected; }
 
     int getScaledWidth() const { return static_cast<int>(width * scaleFactor); }
     int getScaledHeight() const { return static_cast<int>(height * scaleFactor); }
 
-    void SetColorKey(COLORREF color) {m_colorKey = color;}
+    void SetColorKey(COLORREF color) { m_colorKey = color; }
 
-    void setTransparency(bool transparent) {useTransparency = transparent;}
-    COLORREF GetColorKey() const {return m_colorKey;}
+    void setTransparency(bool transparent) { useTransparency = transparent; }
+    COLORREF GetColorKey() const { return m_colorKey; }
     void Render(HDC hdcDest) {
         if (hBitmap) {
             int scaledWidth = getScaledWidth();
             int scaledHeight = getScaledHeight();
-            if (rotateAngle!= 0.0f) {
-                RenderRotated(hdcDest, scaledWidth, scaledHeight);
-            } else {
+            if (rotateAngle != 0.0f) {
+                // Save the original state
+                int oldGraphicsMode = SetGraphicsMode(hdcDest, GM_ADVANCED);
+                XFORM xform;
+                float radians = rotateAngle * 3.14159f / 180.0f;
+
+                // Set rotation transform matrix
+                xform.eM11 = cos(radians);
+                xform.eM12 = sin(radians);
+                xform.eM21 = -sin(radians);
+                xform.eM22 = cos(radians);
+                xform.eDx = x + scaledWidth / 2;
+                xform.eDy = y + scaledHeight / 2;
+
+                SetWorldTransform(hdcDest, &xform);
+
+                // Draw the sprite centered at (0, 0) in rotated coordinate space
+                if (useTransparency) {
+                    TransparentBlt(hdcDest, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight,
+                        hdcMem, 0, 0, width, height, m_colorKey);
+                }
+                else {
+                    StretchBlt(hdcDest, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight,
+                        hdcMem, 0, 0, width, height, SRCCOPY);
+                }
+
+                // Restore graphics mode and transformation
+                ModifyWorldTransform(hdcDest, NULL, MWT_IDENTITY); // Reset transformation
+                SetGraphicsMode(hdcDest, oldGraphicsMode);
+            }
+            else {
                 if (useTransparency) {
                     TransparentBlt(hdcDest, x, y, scaledWidth, scaledHeight, hdcMem, 0, 0, width, height, m_colorKey);
-                } else {
+                }
+                else {
                     StretchBlt(hdcDest, x, y, scaledWidth, scaledHeight, hdcMem, 0, 0, width, height, SRCCOPY);
                 }
             }
@@ -173,6 +166,6 @@ public:
     }
 
     // Get position for boundary checking
-    POINT getPosition() {return {x, y};}
-    void setPosition(int newX, int newY) {x = newX; y = newY; }
+    POINT getPosition() { return { x, y }; }
+    void setPosition(int newX, int newY) { x = newX; y = newY; }
 };
