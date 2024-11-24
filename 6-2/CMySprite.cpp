@@ -7,29 +7,21 @@ CMySprite::~CMySprite() {
   if (m_hdcMem) DeleteDC(m_hdcMem);
 }
 
-bool CMySprite::LoadBitmap(HINSTANCE hInstance, const std::string& path) {
-  m_hBitmap = (HBITMAP)LoadImage(hInstance, path.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-  if (!m_hBitmap) return false;
-  
-  BITMAP bm;
-  GetObject(m_hBitmap, sizeof(bm), &bm);
-  m_width = bm.bmWidth;
-  m_height = bm.bmHeight;
+bool CMySprite::LoadBitmapFromResource(HINSTANCE hInstance, UINT resourceID) {
+    m_hBitmap = (HBITMAP)LoadImage(hInstance, MAKEINTRESOURCE(resourceID), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+    if (!m_hBitmap) return false;
 
-  HDC hdc = GetDC(NULL);
-  m_hdcMem = CreateCompatibleDC(hdc);
-  SelectObject(m_hdcMem, m_hBitmap);
-  //SelectObject doesn't directly modify the m_hdcMem variable itself, but it changes the state of the DC that m_hdcMem represents.
+    BITMAP bm;
+    GetObject(m_hBitmap, sizeof(bm), &bm);
+    m_width = bm.bmWidth;
+    m_height = bm.bmHeight;
 
-// The DC (m_hdcMem) is like an artist's easel with all their tools.
-// The bitmap (m_hBitmap) is the canvas.
-// SelectObject is the act of putting the canvas on the easel.
-// Now, when you use this easel (DC), you're working on that specific canvas (bitmap).
+    HDC hdc = GetDC(NULL);
+    m_hdcMem = CreateCompatibleDC(hdc);
+    SelectObject(m_hdcMem, m_hBitmap);
+    ReleaseDC(NULL, hdc);
 
-
-  ReleaseDC(NULL, hdc);
-
-  return true;
+    return true;
 }
 
 void CMySprite::SetPosition(int x, int y) {

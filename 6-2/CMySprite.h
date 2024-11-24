@@ -11,9 +11,9 @@ class CMySprite {
     CMySprite();
     virtual ~CMySprite();
 
-    bool LoadBitmap(HINSTANCE hInstacne, const std::string& path);
+    bool LoadBitmapFromResource(HINSTANCE hInstacne, UINT resourceID);
     void SetPosition(int x, int y);
-    void Render(HDC hdcDest);
+    virtual void Render(HDC hdcDest);
 
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }

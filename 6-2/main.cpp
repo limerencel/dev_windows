@@ -1,6 +1,9 @@
 #include <windows.h>
 #include "Monster.h"
 #include <wingdi.h>
+#include <iostream>
+#include <sstream>
+#include "Resource.h"
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
@@ -12,7 +15,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
   switch(message) {
     case WM_CREATE:
       {
-        g_monster.Initialize(GetModuleHandle(NULL), "./monster.bmp");
+        g_monster.Initialize(GetModuleHandle(NULL), IDB_BITMAP1);
       }
       break;
     case WM_PAINT: {
@@ -28,63 +31,49 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 }
 
 void Render(HWND hWnd) {
-  PAINTSTRUCT ps;
-  HDC hdc = BeginPaint(hWnd, &ps);
+  RECT clientRect;
+  GetClientRect(hWnd, &clientRect);
+  int width = clientRect.right - clientRect.left;
+  int height = clientRect.bottom - clientRect.top;
+
+  HDC hdc = GetDC(hWnd);
   
   // Create a memory DC and bitmap for double-buffering
   HDC memDC = CreateCompatibleDC(hdc);
-  HBITMAP hBitmap = CreateCompatibleBitmap(hdc, WINDOW_WIDTH, WINDOW_HEIGHT);
+  HBITMAP hBitmap = CreateCompatibleBitmap(hdc, width, height);
   HBITMAP hOldBitmap = (HBITMAP)SelectObject(memDC, hBitmap);
 
   // Clear the background
   HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
-  RECT rc = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
-  FillRect(memDC, &rc, hBrush);
+  FillRect(memDC, &clientRect, hBrush);
   DeleteObject(hBrush);
 
-  // Render the sprite to the memory DC
-  COLORREF transparentColor = RGB(0, 229, 0);
-
-  // Get the dimensions of the sprite
-  int spriteWidth = g_monster.GetWidth();
-  int spriteHeight = g_monster.GetHeight();
+  // Render the monster
+  g_monster.Render(memDC);
 
   // Copy the memory DC to the screen DC
-  TransparentBlt(
-    memDC,
-    g_monster.GetX(),
-    g_monster.GetY(),
-    spriteWidth,
-    spriteHeight,
-    g_monster.GetMemDC(),
-    0, 0,
-    spriteWidth,
-    spriteHeight,
-    transparentColor
-  );
-
-  BitBlt(hdc, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, memDC, 0, 0, SRCCOPY);
+  BitBlt(hdc, 0, 0, width, height, memDC, 0, 0, SRCCOPY);
 
   // Clean up
   SelectObject(memDC, hOldBitmap);
   DeleteObject(hBitmap);
   DeleteDC(memDC);
 
-  EndPaint(hWnd, &ps);
+  ReleaseDC(hWnd, hdc);
 }
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
   WNDCLASS wc = {};
   wc.lpfnWndProc = WndProc;
   wc.hInstance = hInstance;
-  wc.lpszClassName = "MyWindowClass";
+  wc.lpszClassName = L"MyWindowClass";
 
   RegisterClass(&wc);
 
   HWND hWnd = CreateWindowEx(
     0,
     wc.lpszClassName,
-    "Hello, Windows!",
+    L"Hello, Windows!",
     WS_OVERLAPPEDWINDOW,
     CW_USEDEFAULT,
     CW_USEDEFAULT,
@@ -101,23 +90,34 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
   MSG msg;
   RECT clientRect;
+  DWORD lastUpdateTime = GetTickCount64();
+  const DWORD updateInterval = 1000 / 60; // 60 FPS
+
   while (true) {
     if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT) break;
       TranslateMessage(&msg);
       DispatchMessage(&msg);
     } else {
-      // Get Client area dimensions
-      GetClientRect(hWnd, &clientRect);
-      int width = clientRect.right - clientRect.left;
-      int height = clientRect.bottom - clientRect.top;
+      DWORD currentTime = GetTickCount64();
+      if (currentTime - lastUpdateTime >= updateInterval) {
+        // Get Client area dimensions
+        GetClientRect(hWnd, &clientRect);
+        int width = clientRect.right - clientRect.left;
+        int height = clientRect.bottom - clientRect.top;
 
-      // Game logic
-      g_monster.Update(width, height);
+        // Game logic
+        g_monster.Update(width, height);
 
-      // Render
-      InvalidateRect(hWnd, NULL, FALSE);
-      Render(hWnd);
+        std::cout << "Monster position: (" << g_monster.GetX() << ", " << g_monster.GetY() << ")" << std::endl;
+
+        // Render
+        Render(hWnd);
+
+        lastUpdateTime = currentTime;
+      } else {
+        Sleep(1);
+      }
     }
   }
 
