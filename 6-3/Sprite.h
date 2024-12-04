@@ -15,6 +15,7 @@ private:
     int frameRow;
     DWORD lastFrameTime, frameDelay;
     bool animate;
+    bool isSelected;
     HBITMAP hbmp;
     std::string path;
     COLORREF bitmapBGColor;
@@ -23,7 +24,8 @@ public:
     Sprite(int x, int y, COLORREF bitmapBGColor, int framePerRow = 1, bool animate = false) 
     : x(x), y(y), width(0), height(0), hbmp(NULL), path(""), 
     frameWidth(0), frameHeight(0), currentFrame(0), maxFrames(framePerRow), frameRow(0), 
-    lastFrameTime(0), frameDelay(100), bitmapBGColor(bitmapBGColor), animate(animate) {};
+    lastFrameTime(0), frameDelay(100), bitmapBGColor(bitmapBGColor), animate(animate),
+    isSelected(false) {};
 
     ~Sprite() {
         if (hbmp) DeleteObject(hbmp); hbmp = NULL;
@@ -77,11 +79,21 @@ public:
     int GetY() const { return y; };
 
     void SetX(int x) { this->x = x; };
+    void SetY(int y) { this->y = y; };
     void SetPosition(int newX, int newY) { x = newX; y = newY; }
 
     void SetFrameDelay(DWORD delay) { frameDelay = delay; }
     void SetFrameRow(int row) { frameRow = row % 4; }
     bool IsAnimating() const { return animate; }
+
+    bool IsSelected() const { return isSelected; }
+    void SetSelected(bool selected) { isSelected = selected; }
+
+    // Helper function to check if a point is inside the sprite
+    bool ContainsPoint(int pointX, int pointY) const {
+        return (pointX >= x && pointX < x + width &&
+                pointY >= y && pointY < y + height);
+    }
 
     void Render(HDC hdc) {
         if (!hbmp) return;  // Don't render if bitmap isn't loaded
