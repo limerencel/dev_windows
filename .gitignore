@@ -2,3 +2,4 @@
 output
 test.cpp
 *.exe
+.vs
