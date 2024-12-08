@@ -102,6 +102,12 @@ LRESULT CALLBACK Game::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             if (!m_SpriteManager.CreateSpriteType("walker", 0, 150, RGB(0, 255, 0), 1, 4, false)) {
                 MessageBox(hWnd, "Failed to create walker sprite type", "Error", MB_ICONERROR);
             }
+            if (!m_SpriteManager.CreateSpriteType("box", 0, 0, RGB(255, 255, 255), 1, 1, false)) {
+                MessageBox(hWnd, "Failed to create box sprite type", "Error", MB_ICONERROR);
+            }
+            if (!m_SpriteManager.CreateSpriteType("apple", 0, 0, RGB(255, 255, 255), 1, 1, false)) {
+                MessageBox(hWnd, "Failed to create apple sprite type", "Error", MB_ICONERROR);
+            }
 
             // Load bitmaps
             if (!m_SpriteManager.LoadSpriteBitmap("monster", "./assets/monster.bmp")) {
@@ -110,14 +116,26 @@ LRESULT CALLBACK Game::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             if (!m_SpriteManager.LoadSpriteBitmap("walker", "./assets/walker.bmp")) {
                 MessageBox(hWnd, "Failed to load walker.bmp", "Error", MB_ICONERROR);
             }
+            if (!m_SpriteManager.LoadSpriteBitmap("box", "./assets/box.bmp")) {
+                MessageBox(hWnd, "Failed to load box.bmp", "Error", MB_ICONERROR);
+            }
+            if (!m_SpriteManager.LoadSpriteBitmap("apple", "./assets/apple.bmp")) {
+                MessageBox(hWnd, "Failed to load apple.bmp", "Error", MB_ICONERROR);
+            }
 
             // Add initial instances
-            if (!m_SpriteManager.AddInstance("monster", 800, 20)) {
+            if (!m_SpriteManager.AddInstance("monster", 300, 100)) {
                 MessageBox(hWnd, "Failed to add initial instances", "Error", MB_ICONERROR);
             }
             if (!m_SpriteManager.AddInstance("walker", 100, 100)) {
                 MessageBox(hWnd, "Failed to add initial instances", "Error", MB_ICONERROR);
             }
+            if (!m_SpriteManager.AddInstance("box", 400, 300)) {
+                MessageBox(hWnd, "Failed to add box instance", "Error", MB_ICONERROR);
+            }
+
+            // Set up timer for monster patrol (100ms interval)
+            SetTimer(hWnd, 1, 100, NULL);
 
             // Return 0 to continue window creation
             return 0;
@@ -191,7 +209,16 @@ LRESULT CALLBACK Game::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             return 0;
         }
 
+        case WM_TIMER: {
+            if (wParam == 1) {  // Our monster patrol timer
+                m_SpriteManager.MonsterPatrol(0, 0);  // dx and dy will be calculated inside MonsterPatrol
+                InvalidateRect(hWnd, NULL, FALSE);
+            }
+            return 0;
+        }
+
         case WM_DESTROY:
+            KillTimer(hWnd, 1);  // Clean up the timer
             PostQuitMessage(0);
             m_isRunning = false;
             return 0;

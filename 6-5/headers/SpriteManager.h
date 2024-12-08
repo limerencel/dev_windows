@@ -24,6 +24,14 @@ private:
     };
 
     std::unordered_map<std::string, SpriteGroup> spriteGroups;
+    
+    // Patrol state variables
+    int patrolLeft;
+    int patrolRight;
+    int patrolTop;
+    int patrolBottom;
+    int patrolState;  // 0: right, 1: down, 2: left, 3: up
+    bool isPatrolling;
 
 public:
     SpriteManager();
@@ -38,6 +46,8 @@ public:
     void RenderAll(HDC hdc);
     bool HasSpace(const std::string& typeName) const;
     void MoveWalker(int dx, int dy); 
+    void MonsterPatrol(int dx, int dy);
+    bool CheckCollision(const Sprite* sprite1, const Sprite* sprite2);
 };
 
 #endif // SPRITE_MANAGER_H
